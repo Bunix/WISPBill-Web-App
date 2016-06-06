@@ -3,114 +3,109 @@
 	 <link rel="stylesheet" href="{{ asset('/plugins/datatables/dataTables.bootstrap.css') }}">
 @endsection
 @section('htmlheader_title')
-	View Sites
+	Add a Contact to a Site
 @endsection
-@section('modal')
-@foreach($sites as $site)
-<div class="modal fade  " id="{{$site->id}}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title" id="myModalLabel">Contacts Associated With {{$site->name}}</h4>
-      </div>
-      <div class="modal-body" id="modal-body">
-      <table id="mtable{{$site->id}}" class="table table-bordered table-striped">
-                <thead>
-                <tr>
-				   
-				  <th>Name</th> 
-				   <th>Organization</th>
-				  <th>Phone</th>
-                  <th>Email</th>
-				  <th>Address</th> 
-				 <th>City</th>
-                 <th>Zip</th>
-                </tr>
-               
-                </thead>
-                <tbody>
-                @foreach($site->contacts as $contact)
-            
-				       <td>{{ $contact->name}}</td>
-				         <td>{{ $contact->organization}}</td>
-                 <td>{{ $contact->tel}}</td>
-                 <td>{{ $contact->email}}</td>
-                 <td>{{ $contact->add}}</td>
-                 <td>{{ $contact->city}}</td>
-                 <td>{{ $contact->zip}}</td></tr>
 
-                @endforeach
-      
-              </tbody>
-                <tfoot>
-                
-                 <tr>
-				   
-				  <th>Name</th> 
-				   <th>Organization</th>
-				  <th>Phone</th>
-                  <th>Email</th>
-				  <th>Address</th> 
-				 <th>City</th>
-                 <th>Zip</th>
-                </tr>
-                
-                </tfoot>
-              </table>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
-@endforeach
-@endsection
 @section('contentheader_title')
-	View Sites
+	Add a Contact to a Site
 @endsection
 
 @section('main-content')
 	<!-- general form elements disabled -->
           <div class="box box-warning">
             <div class="box-header with-border">
-            <h4>We have {{$total}} Sites</h4>
+            <h4>Select a Contact and a Site to Link Them</h4>
             </div>
             <!-- /.box-header -->
             <div class="box-body">
+			        @if (count($errors) > 0)
+    <div class="alert alert-danger">
+        <ul>
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+	  @endif
+			<form role="form" action="/addcontactsite"method="post">
+                <!-- text input -->
+                <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                <h4>Contacts</h4>
             <table id="table" class="table table-bordered table-striped">
                 <thead>
                 <tr>
+				<th>Select</th>
 				  <th>Name</th> 
-                    <th>Type</th>
-				  <th>Latitude</th> 
-				 <th>Longitude</th>
-				  	 <th>Contacts</th>
+				   <th>Organization</th>
+				  <th>Phone</th>
+                  <th>Email</th>
+				  <th>Address</th> 
+				 <th>City</th>
+                 <th>Zip</th>
                 </tr>
                 </thead>
                 <tbody>
-             @foreach($sites as $site)
-                 <tr><td>{{ $site->name}}</td>
-                 <td style="text-transform: capitalize;">{{ $site->type}}</td>
-                 <td>{{ $site->latitude}}</td>
-                 <td>{{ $site->longitude}}</td>
-                 <td>
-		   <button type='button' class='btn btn-block btn-success btn-sm' data-toggle='modal' data-target='#{{$site->id}}' '>Show Contacts</button>
-		</td>
+             @foreach($contacts as $contact)
+                 <tr><td><input type='radio' name='contactid' value='{{$contact->id}}' unchecked></td>
+				 <td>{{ $contact->name}}</td>
+				 <td>{{ $contact->organization}}</td>
+                 <td>{{ $contact->tel}}</td>
+                 <td>{{ $contact->email}}</td>
+                 <td>{{ $contact->add}}</td>
+                 <td>{{ $contact->city}}</td>
+                 <td>{{ $contact->zip}}</td></tr>
              @endforeach
               </tbody>
                 <tfoot>
                 <tr>
+					<th>Select</th>
+				  <th>Name</th> 
+				   <th>Organization</th>
+				  <th>Phone</th>
+                  <th>Email</th>
+				  <th>Address</th> 
+				 <th>City</th>
+                 <th>Zip</th>
+                </tr>
+                </tfoot>
+              </table>
+				
+			  <h4>Sites</h4>
+			    <table id="table2" class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                	<th>Select</th>
+				  <th>Name</th> 
+                    <th>Type</th>
+				  <th>Latitude</th> 
+				 <th>Longitude</th>
+                </tr>
+                </thead>
+                <tbody>
+             @foreach($sites as $site)
+                 <tr><td><input type='radio' name='siteid' value='{{$site->id}}' unchecked></td>
+                 	<td>{{ $site->name}}</td>
+                 <td style="text-transform: capitalize;">{{ $site->type}}</td>
+                 <td>{{ $site->latitude}}</td>
+                 <td>{{ $site->longitude}}</td>
+             @endforeach
+              </tbody>
+                <tfoot>
+                <tr>
+                	<th>Select</th>
                <th>Name</th> 
                <th>Type</th>
 				  <th>Latitude</th> 
 				 <th>Longitude</th>
-				 	 <th>Contacts</th>
                 </tr>
                 </tfoot>
               </table>
-			
+
+				<div class="box-footer">
+                <button type="submit" class="btn btn-primary">Submit</button>
+              </div>
+     
+              </form>
             <!-- /.box-body -->
           </div>
                </div>
@@ -131,9 +126,9 @@
       "autoWidth": true
     });
   });
-  @foreach($sites as $site)
+  
     $(function () {
-    $('#mtable{{$site->id}}').DataTable({
+    $('#table2').DataTable({
       "paging": true,
       "lengthChange": true,
       "searching": true,
@@ -142,6 +137,5 @@
       "autoWidth": true
     });
   });
-  @endforeach
 </script>
 @endsection 
