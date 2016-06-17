@@ -8,13 +8,18 @@ use App\Http\Requests;
 
 use App\Models\Contacts;
 
+use App\Models\Contact_Notes;
+
 use App\Models\Locations;
+
+use Auth;
 
 class contactcontroller extends Controller
 {
     public function __construct()
     {
         $this->middleware('auth');
+        $this->middleware('role');
     }
     
     public function create()
@@ -73,8 +78,33 @@ class contactcontroller extends Controller
     public function index()
     {
         $total = Contacts::count();
-        $contacts = Contacts::all();
+        $contacts = Contacts::with('notes.creator')->get();
         
         return view('contact.view', compact('contacts','total'));
+    }
+    
+    public function notecreate()
+    {
+         $contacts = Contacts::all();
+    
+         return view('contact.newnote', compact('contacts'));
+    }
+    
+    public function notestore(Request $request)
+    {
+         $this->validate($request, [
+        'contactid' => 'required',
+        'note' => 'required',
+        ]);
+        
+        $userid = Auth::user()->id;
+        
+        Contact_Notes::create([
+            'contact_id' => $request['contactid'],
+            'user_id' => $userid,
+            'note' => $request['note'],
+        ]);
+
+        return redirect("/");
     }
 }

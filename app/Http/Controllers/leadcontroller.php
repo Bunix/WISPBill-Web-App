@@ -10,9 +10,13 @@ use App\Models\Customer_locations;
 
 use App\Helpers\Helper;
 
+use App\Helpers\Billing;
+
 use Illuminate\Http\Request;
 
 use App\Http\Requests;
+
+use App\User;
 
 class leadcontroller extends Controller
 {
@@ -20,6 +24,7 @@ class leadcontroller extends Controller
     public function __construct()
     {
         $this->middleware('auth');
+        $this->middleware('role');
     }
 
     public function create()
@@ -51,10 +56,27 @@ class leadcontroller extends Controller
 
     public function addlocation()
     {
-        $total = Customer_info::count();
-        $leads = Customer_info::all();
+        $total = Customer_info::whereNull('billing_id')->count();
+        $leads = Customer_info::whereNull('billing_id')->get();
+        
+        $geoservice = Settings::where('setting_name', 'geocoder service')->first();
+        $geoservice = $geoservice['setting_value'];
+        
+        $lat = Settings::where('setting_name', 'map lat')->first();
+        $lon = Settings::where('setting_name', 'map lon')->first();
+        $zoom = Settings::where('setting_name', 'map zoom')->first();
 
-        return view('lead.addlocation', compact('leads','total'));
+        $lat = $lat['setting_value'];
+        $lon = $lon['setting_value'];
+        $zoom = $zoom['setting_value'];
+
+        $mapsettings = array(
+        "lat" => "$lat",
+        "lon" => "$lon",
+        "zoom" => "$zoom",
+        );
+        
+        return view('lead.addlocation', compact('leads','total','geoservice','mapsettings'));
     }
 
     public function storeaddlocation(Request $request)
@@ -66,8 +88,11 @@ class leadcontroller extends Controller
         'city' => 'required_if:location,different',
         'zip' => 'required_if:location,different|numeric',
         'state' => 'required_if:location,different',
+        'lat' => 'required_if:geocoder,manual',
+        'lon' => 'required_if:geocoder,manual',
+        'geocoder' => 'required|in:manual,auto',
         ]);
-
+        
          if($request['location'] == 'same'){
              $customer = Customer_info::find($request['id']);
              $add = $customer['add'];
@@ -80,12 +105,25 @@ class leadcontroller extends Controller
             $state = $request['state'];
             $zip = $request['zip'];
          }
-         $place = "$add $city $state $zip";
+         
+         if($request['geocoder'] == 'auto'){
+             
+             $place = "$add $city $state $zip";
 
-        $cords = Helper::geocode("$place");
-
-        $lat = $cords['lat'];
-        $lon = $cords['lon'];
+             $cords = Helper::geocode("$place");
+ 
+             $lat = $cords['lat'];
+             $lon = $cords['lon'];
+             
+        }elseif($request['geocoder'] == 'manual'){
+            
+            $lat = $request['lat'];
+            $lon = $request['lon'];
+            
+        }else{
+            
+             abort(500, 'The Geocoding System is not Set');
+        }
 
         Customer_locations::create([
             'longitude' => $lon,
@@ -106,7 +144,7 @@ class leadcontroller extends Controller
          $this->validate($request, [
         'type' => 'required|in:residential,business',
         'name' => 'required',
-        'email' => 'required|email|max:255|unique:customer_info',
+        'email' => 'required|email|max:255|unique:customer_info|unique:users',
         'tel' => 'required|regex:/\d{3}\-\d{3}\-\d{4}/',
         'add' => 'required',
         'city' => 'required',
@@ -125,6 +163,8 @@ class leadcontroller extends Controller
             'state' => $request['state'],
             'source' => $request['source'],
             'tel' => $request['tel'],
+            'pin' => NULL,
+            'billing_id' => NULL,
         ]);
         $id = $lead['id'];
         return redirect("/viewalead/$id");
@@ -132,8 +172,8 @@ class leadcontroller extends Controller
 
     public function index()
     {
-        $total = Customer_info::count();
-        $leads = Customer_info::all();
+        $total = Customer_info::whereNull('billing_id')->count();
+        $leads = Customer_info::whereNull('billing_id')->get();
 
         return view('lead.view', compact('leads','total'));
     }
@@ -144,5 +184,73 @@ class leadcontroller extends Controller
         $leads['1'] = Customer_info::findOrFail($id);
 
       return view('lead.view', compact('leads','total'));
+    }
+    
+    public function addaccount()
+    {
+        $total = Customer_info::has('users', '<', 1)->whereNull('billing_id')->count();
+        $leads = Customer_info::has('users', '<', 1)->whereNull('billing_id')->get();
+        
+        $pin = Settings::where('setting_name', 'Customer PIN')->first();
+        $pin = $pin['setting_value'];
+        
+        return view('lead.addaccount', compact('leads','total','pin'));
+    }
+    
+    public function storeaddaccount(Request $request)
+    {
+         $this->validate($request, [
+         'name' => 'required|max:255',
+         'password' => 'required|confirmed|min:6',
+         'pin' => 'required_if:setpin,true|confirmed|min:4|numeric',
+         'theme' => 'required|in:skin-blue,skin-blue-light,skin-yellow,skin-yellow-light,skin-green,skin-green-light,skin-purple,skin-purple-light,skin-red,skin-red-light,skin-black,skin-black-light',
+         'id' => 'required|numeric',
+        ]);
+        
+        $customer = Customer_info::find($request['id']);
+        
+        User::create([
+            'name' => $request['name'],
+            'email' => $customer['email'],
+            'password' => bcrypt($request['password']),
+            'skin' => $request['theme'],
+            'img' => 'user_default_img.jpg',
+            'role' => 'Customer',
+            'phone' => $customer['tel'],
+            'customer_info_id' => $request['id'],
+        ]);
+        
+        $customer->pin = bcrypt($request['pin']);
+
+        $customer->save();
+        
+        return redirect("/");
+    }
+    
+     public function addbilling()
+    {
+        $total = Customer_info::whereNull('billing_id')->count();
+        $leads = Customer_info::whereNull('billing_id')->get();
+        
+        return view('lead.addbilling', compact('leads','total'));
+    }
+    
+    public function addbillingstore(Request $request)
+    {
+         $this->validate($request, [
+         'id' => 'required|numeric',
+        ]);
+        
+        $id = $request['id'];
+        
+        $billingid = Billing::createcustomer($id,$request);
+        
+        $customer = Customer_info::find($id);
+
+        $customer->billing_id = $billingid;
+
+        $customer->save();
+        
+        return redirect("/");
     }
 }

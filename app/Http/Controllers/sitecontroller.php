@@ -6,15 +6,20 @@ use App\Models\Settings;
 
 use App\Models\Locations;
 
+use App\Models\Site_Notes;
+
 use Illuminate\Http\Request;
 
 use App\Http\Requests;
+
+use Auth;
 
 class sitecontroller extends Controller
 {
     public function __construct()
     {
         $this->middleware('auth');
+        $this->middleware('role');
     }
 
     public function create()
@@ -128,8 +133,34 @@ class sitecontroller extends Controller
     {
         $total = Locations::count();
        
-        $sites = Locations::with('contacts')->get();
+        $sites = Locations::with('contacts','notes.creator')->get();
         
         return view('site.view', compact('sites','total'));
+    }
+    
+    public function notecreate()
+    {
+        
+       $sites = Locations::all();
+    
+      return view('site.newnote', compact('sites'));
+    }
+    
+    public function notestore(Request $request)
+    {
+         $this->validate($request, [
+        'siteid' => 'required',
+        'note' => 'required',
+        ]);
+        
+        $userid = Auth::user()->id;
+        
+        Site_Notes::create([
+            'location_id' => $request['siteid'],
+            'user_id' => $userid,
+            'note' => $request['note'],
+        ]);
+
+        return redirect("/");
     }
 }

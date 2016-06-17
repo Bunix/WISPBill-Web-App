@@ -1,9 +1,12 @@
 @extends('layouts.app')
 @section('page-header')
+  <script src="{{asset('/plugins/jQuery/jQuery-2.1.4.min.js')}}"/></script> 
 	 <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
    <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
 	    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-geocoder-mapzen/1.4.0/leaflet-geocoder-mapzen.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-geocoder-mapzen/1.4.0/leaflet-geocoder-mapzen.js"></script>
+<link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
+<script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
 	 <style>
     #map{ min-width: inherit; min-height: 500px; }
   </style>
@@ -14,10 +17,42 @@
 
 @section('contentheader_title')
 	Settings
+
 @endsection
 
 @section('main-content')
 	<!-- general form elements disabled -->
+        <div class="box">
+            <!-- /.box-header -->
+            <div class="box-body">
+           
+          <!-- small box -->
+          <div class="small-box bg-aqua">
+            <div class="inner">
+              <h3>View User's</h3>
+
+              
+            </div>
+            <div class="icon">
+              <i class="ion ion-person-stalker"></i>
+            </div>
+            <a href="/viewusers" class="small-box-footer">View <i class="fa fa-arrow-circle-right"></i></a>
+          </div>
+          
+           <div class="small-box bg-green">
+            <div class="inner">
+              <h3>Manage User Permissions</h3>
+
+              
+            </div>
+            <div class="icon">
+              <i class="ion ion-person-stalker"></i>
+            </div>
+            <a href="/manageusers" class="small-box-footer">Manage Permissions <i class="fa fa-arrow-circle-right"></i></a>
+          </div>
+       
+			</div>
+		  </div>
           <div class="box box-warning">
             <div class="box-header with-border">
 			<h4>Stipe API Keys</h4>
@@ -89,7 +124,9 @@
 					<label>Geocoding Service</label>
                     <select class="form-control" name="service" required>
 					<option value='' selected disabled>Please Select a Service</option>
-                    <option value="mapzen">Mapzen Search</option>
+                    <option value="mapzen">Mapzen Search (Based on OpenAddress API Key Required)</option>
+                    <option value="census">US Census Geocoder (Residential Only API Key Not Required)</option>
+                     <option value="manual">Manual (Map Based API Key Not Required)</option>
 					</select>
                 </div>
                
@@ -125,7 +162,7 @@
              <script>
   // initialize the map
 
-  var map = L.map('map').setView([37.804146, -122.275045], 16);
+  var map = L.map('map').setView([38.0000, -97.0000], 4);
 
   // load a tile layer
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -150,6 +187,41 @@
                
 				<div class="box-footer">
                 <button type="submit" class="btn btn-primary">Save View</button>
+              </div>
+     
+              </form>
+			</div>
+		  </div>
+		  
+		   <div class="box box-warning">
+            <div class="box-header with-border">
+			<h4>General Settings</h4>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body">
+         
+              <form role="form" action="/togglesettings"method="post">
+                <!-- text input -->
+                <input type="hidden" name="_token" value="{{ csrf_token() }}">
+		
+                <div class="checkbox">
+          <h4>
+          <input type="checkbox" name="pin" 
+          @if ($verifypin == true)
+          checked
+          @elseif ($verifypin == false)
+          
+          @else
+          
+          @endif 
+          data-toggle="toggle" data-size="large">
+            Customer PIN Verification Required for Actions done by Technicians and Agents
+          </h4>
+            </div>
+
+
+				<div class="box-footer">
+                <button type="submit" class="btn btn-primary">Save</button>
               </div>
      
               </form>
