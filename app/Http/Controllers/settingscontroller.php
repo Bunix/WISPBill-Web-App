@@ -30,8 +30,17 @@ class settingscontroller extends Controller
         
         $verifypin = Settings::where('setting_name', 'Customer PIN')->first();
         $verifypin = $verifypin['setting_value'];
+        
+        $speed = Settings::where('setting_name', 'Rate Limit Plans')->first();
+        $speed = $speed['setting_value'];
+        
+        $data = Settings::where('setting_name', 'Data Cap Plans')->first();
+        $data = $data['setting_value'];
+        
+        $burst = Settings::where('setting_name', 'Rate Limit Bursting Plans')->first();
+        $burst = $burst['setting_value'];
 
-        return view('admin.main',compact('key','verifypin'));
+        return view('admin.main',compact('key','verifypin','speed','data','burst'));
     }
 
      public function setstripekey(Request $request)
@@ -161,11 +170,38 @@ class settingscontroller extends Controller
 
         // Clear out DB of old settings
         Settings::where('setting_name', 'Customer PIN')->delete();
-        
+        Settings::where('setting_name', 'Rate Limit Plans')->delete();
+        Settings::where('setting_name', 'Data Cap Plans')->delete();
+        Settings::where('setting_name', 'Rate Limit Bursting Plans')->delete();
+
         if(isset($request['pin'])){
             $pinvalue = true;
         }elseif(!isset($request['pin'])){
             $pinvalue = false;
+        }else{
+            abort(500, 'Unexpected Issue Please Contact Administrator');
+        }
+        
+        if(isset($request['speed'])){
+            $speed = true;
+        }elseif(!isset($request['speed'])){
+            $speed = false;
+        }else{
+            abort(500, 'Unexpected Issue Please Contact Administrator');
+        }
+        
+        if(isset($request['data'])){
+            $data = true;
+        }elseif(!isset($request['data'])){
+            $data = false;
+        }else{
+            abort(500, 'Unexpected Issue Please Contact Administrator');
+        }
+        
+        if(isset($request['burst'])){
+            $burst = true;
+        }elseif(!isset($request['burst'])){
+            $burst = false;
         }else{
             abort(500, 'Unexpected Issue Please Contact Administrator');
         }
@@ -175,6 +211,40 @@ class settingscontroller extends Controller
             'setting_value' => $pinvalue,
         ]);
         
+        Settings::create([
+            'setting_name' => 'Rate Limit Plans',
+            'setting_value' => $speed,
+        ]);
+        
+        Settings::create([
+            'setting_name' => 'Data Cap Plans',
+            'setting_value' => $data,
+        ]);
+        
+        Settings::create([
+            'setting_name' => 'Rate Limit Bursting Plans',
+            'setting_value' => $burst,
+        ]);
+        
+        return redirect("/");
+    }
+    
+     public function mailmarketingurl(Request $request)
+    {
+         $this->validate($request, [
+        'url' => 'required|url',
+        ]);
+
+        // Clear out DB of old keys
+        Settings::where('setting_name', 'Open-Mail-Marketing URL')->delete();
+
+        $url = trim($request['url']);
+
+        Settings::create([
+            'setting_name' => 'Open-Mail-Marketing URL',
+            'setting_value' => $url,
+        ]);
+
         return redirect("/");
     }
 
