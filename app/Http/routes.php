@@ -43,6 +43,7 @@ Route::post('/setgeocoder', 'settingscontroller@setgeocoder');
 Route::post('/setmapview', 'settingscontroller@setmapview');
 Route::post('/togglesettings', 'settingscontroller@togglesettings');
 Route::post('/setmailmarketingurl', 'settingscontroller@mailmarketingurl');
+Route::post('/setssh', 'settingscontroller@setssh');
 //Site Routes
 Route::get('/newsite', 'sitecontroller@create');
 Route::post('/newsite', 'sitecontroller@store');
@@ -64,9 +65,20 @@ Route::post('/contact/newnote', 'contactcontroller@notestore');
 //Plan Routes 
 Route::get('/newplan', 'plancontroller@create');
 Route::post('/newplan', 'plancontroller@store');
+Route::get('/viewplans', 'plancontroller@index');
 //Marketing Routes 
 Route::get('/marketinglist', 'marketingcontroller@listsites');
 Route::post('/marketinglist', 'marketingcontroller@getlist');
+//Monitoring Routes
+Route::get('/newnetwork', 'monitoringcontroller@networkcreate');
+Route::post('/newnetwork', 'monitoringcontroller@networkstore');
+Route::get('/addsshcredentials', 'monitoringcontroller@setssh');
+Route::post('/addsshcredentials', 'monitoringcontroller@storessh');
+Route::get('/portdata/{id}/{timeframe}/data.csv', 'monitoringcontroller@displayportdata');
+Route::get('/radiodata/{id}/{timeframe}/{type}/data.csv', 'monitoringcontroller@displayradiodata');
+//Device Routes
+Route::get('/viewdevices', 'devicecontroller@index');
+Route::get('/viewdevices/{id}', 'devicecontroller@show');
 //Placeholder routes
 Route::get('/customer/', function () {
     return view('lander');
